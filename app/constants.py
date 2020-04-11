@@ -1,0 +1,1 @@
+YAHOO_BASE_URL = 'https://query1.finance.yahoo.com/v7/finance/download/'

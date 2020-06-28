@@ -6,6 +6,7 @@ import app.constants as constants
 import dateutil.relativedelta as relativedelta
 
 from datetime import datetime, time, timedelta
+from time import sleep
 from app.lib.google_sheet_integration import GoogleSheetIntegration
 
 
@@ -43,7 +44,13 @@ class DataRetriever(object):
         response = requests.get(url)
 
         if not response.ok:
-            raise Exception(f'[DataRetriever] Yahoo request error. Response: {response.text}')
+            # Retry one time due to page not found
+            print('[DataRetriever] Failure occurred, waiting 10 seconds then retrying once...')
+            sleep(10)
+
+            response = requests.get(url)
+            if not response.ok:
+                raise Exception(f'[DataRetriever] Yahoo request error on: Getting data for: stock {stock}, {period1} to {period2}, interval: {interval}. Response: {response.text}')
 
         data = response.content.decode('utf8')
         df_history = pd.read_csv(io.StringIO(data))

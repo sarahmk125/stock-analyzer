@@ -8,7 +8,7 @@ This repo is code for a GCP cloud function that takes stock ticks and calculates
 
 - Pip install requirements
 - Make sure you create `app/secrets.py` which should contain a variable `SHEETS_CREDENTIALS` for the google service account.
-- In the stock-analyzer folder, run `python main.py`. The file also accepts command line variables to invetstigate other stocks not in the Google sheet.
+- In the stock-analyzer folder, run `python main.py`. The file also accepts command line variables to investigate other stocks not in the Google sheet.
 
 ### To create floud function
 - Create the cloud function in the project

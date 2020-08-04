@@ -4,6 +4,7 @@ import io
 import logging
 import app.constants as constants
 import dateutil.relativedelta as relativedelta
+import yfinance as yf
 
 from datetime import datetime, time, timedelta
 from time import sleep
@@ -66,6 +67,29 @@ class DataRetriever(object):
         diff_percent = round((yesterday_close - period1_close) / period1_close * 100.0, 2)
         return diff_percent
 
+    def _get_yfinance_ticker(self, tick):
+        print(f'[DataRetriever] Getting YFinance Ticker for {tick}...')
+        stock = yf.Ticker(tick)
+        try:
+            sector = stock.info.get('sector')
+        except (IndexError, ValueError):
+            print('[DataRetriever] Yfinance sector get failed.')
+            sector = None
+        
+        try:
+            industry = stock.info.get('industry')
+        except (IndexError, ValueError):
+            print('[DataRetriever] Yfinance industry get failed.')
+            industry = None
+       
+        try:
+            earnings_date = stock.calendar.iloc[0][0]
+        except (IndexError, ValueError):
+            print('[DataRetriever] Yfinance earnings_date get failed.')
+            earnings_date = None
+       
+        return {'earnings_date': earnings_date, 'sector': sector, 'industry': industry}
+
     def run_stocks_from_sheet(self):
         print(f'[DataRetriever] Getting stock data from sheet...')
         df_sheet = self.google_sheet_integration.sheet_to_df(
@@ -85,6 +109,9 @@ class DataRetriever(object):
         three_month_list = []
         one_year_list = []
         five_year_list = []
+        earnings_date_list = []
+        sector_list = []
+        industry_list = []
 
         for tick in ticks:
             print(f'[DataRetriever] Processing tick {tick}...')
@@ -112,12 +139,28 @@ class DataRetriever(object):
             period1 = self._get_previous_epoch_years(5, current_dateime)
             df_history = self.custom_retrieve(tick, period1, period2)
             five_year_list.append(self._calculate_adj_close_percent(df_history))
+
+            # Yfinance data
+            yfinance_data = self._get_yfinance_ticker(tick)
+            # Earnings Date
+            # NOTE: The calendar is indexed, so to not reference by position, look up Earnings Date index.
+            earnings_date = yfinance_data.get('earnings_date')
+            earnings_date_list.append(earnings_date)
+            # Sector
+            sector = yfinance_data.get('sector')
+            sector_list.append(sector)
+            # Industry
+            industry = yfinance_data.get('industry')
+            industry_list.append(industry)
         
         df_sheet['week_change'] = week_list
         df_sheet['month_change'] = month_list
         df_sheet['three_month_change'] = three_month_list
         df_sheet['year_change'] = one_year_list
         df_sheet['five_year_change'] = five_year_list
+        df['earnings_date'] = earnings_date_list
+        df_sheet['sector'] = sector_listearnings_date_list
+        df_sheet['industry'] = industry_list
 
         print('[DataRetriever] Writing to sheet...')
         self.google_sheet_integration.df_to_sheet(

@@ -2,3 +2,4 @@ pandas==0.25.0
 ipdb==0.12.2
 google-api-python-client==1.7.11
 google-auth-oauthlib==0.3.0
+yfinance==0.1.54
